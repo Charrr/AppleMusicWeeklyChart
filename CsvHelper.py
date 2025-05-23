@@ -51,9 +51,18 @@ def sort_tracks_by_delta_play_counts(delta_dict, reverse=True):
     ]
     
 
+def save_tracks_to_csv(persistent_ids, file_path='/Users/charliec/Library/CloudStorage/OneDrive-Personal/CharlieCares/charrrboard/CharrrboardTracks.csv'):
+    with open(file_path, 'w', newline='') as f:
+        writer = csv.writer(f)
+        for pid in persistent_ids:
+            writer.writerow([pid])
+    return os.path.abspath(file_path)
+
+
 # MAIN ACTIONS
 ids = read_ids_from_csv()
 result = get_delta_played_counts(ids)
 print(result)
 sorted = sort_tracks_by_delta_play_counts(result)
 print(sorted)
+save_tracks_to_csv(sorted)
