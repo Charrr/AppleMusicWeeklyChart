@@ -2,9 +2,13 @@
 import csv
 import os
 
-def get_delta_played_counts(persistent_ids):
+def read_ids_from_csv(file_path='/Users/charliec/Library/CloudStorage/OneDrive-Personal/CharlieCares/charrrboard/RecentlyPlayed.csv'):
+    with open(file_path, 'r', encoding='mac_roman') as file:
+        tracks = [row[0] for row in csv.reader(file)][1:]  # 跳过表头
+        return tracks
+
+def get_delta_played_counts(persistent_ids, csv_dir='/Users/charliec/Library/CloudStorage/OneDrive-Personal/CharlieCares/charrrboard'):
     delta_dict = {}
-    csv_dir = '/Users/charliec/Library/CloudStorage/OneDrive-Personal/CharlieCares/charrrboard'
     
     try:
         play_count_dict_old = dict(read_ids_and_played_counts_from_csv(os.path.join(csv_dir, 'AllExport_old.csv')))
@@ -38,7 +42,8 @@ def read_ids_and_played_counts_from_csv(file_path, id_col='ID', play_col='Played
         return {}
     return play_count_dict
 
+
 # MAIN ACTIONS
-test_ids = ["A53991716CBAD82E", "E04ADC4D024DEC64", "019DB7F3AD120FCE", "F7B298D418875562", "9658547BA051508D"]
-result = get_delta_played_counts(test_ids)
+ids = read_ids_from_csv()
+result = get_delta_played_counts(ids)
 print(result)
