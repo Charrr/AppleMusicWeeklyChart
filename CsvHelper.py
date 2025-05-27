@@ -1,7 +1,9 @@
 
 import csv
 import os
-    
+from typing import Dict, List, Tuple
+from pathlib import Path
+
 def read_ids_and_played_counts_from_csv(file_path, id_col='ID', play_col='Played Count'):
     play_count_dict = {}
     try:
@@ -44,19 +46,20 @@ def get_delta_played_counts(persistent_ids, csv_dir='/Users/charliec/Library/Clo
     return delta_dict
 
 
-def sort_tracks_by_delta_play_counts(delta_dict, reverse=True):
-    return [
-        item[0] for item in
-        sorted(delta_dict.items(), key=lambda x: x[1], reverse=reverse)
-    ]
-    
+def sort_tracks_by_delta_play_counts(
+    delta_dict: Dict[str, int], 
+    reverse: bool = True
+) -> List[Tuple[str, int]]:
+    return sorted(delta_dict.items(), key=lambda x: x[1], reverse=reverse)
 
-def save_tracks_to_csv(persistent_ids, file_path='/Users/charliec/Library/CloudStorage/OneDrive-Personal/CharlieCares/charrrboard/CharrrboardTracks.csv'):
-    with open(file_path, 'w', newline='') as f:
+
+def save_tracks_to_csv(sorted_data: List[Tuple[str, int]], output_path: str ='/Users/charliec/Library/CloudStorage/OneDrive-Personal/CharlieCares/charrrboard/Charrrboard.csv') -> None:
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    
+    with open(path, 'w', newline='', encoding='mac_roman') as f:
         writer = csv.writer(f)
-        for pid in persistent_ids:
-            writer.writerow([pid])
-    return os.path.abspath(file_path)
+        writer.writerows(sorted_data)
 
 
 # MAIN ACTIONS
