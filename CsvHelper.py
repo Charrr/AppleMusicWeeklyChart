@@ -4,6 +4,22 @@ import os
 from typing import Dict, List, Tuple
 from pathlib import Path
 
+
+def read_ids_and_played_counts_from_csv_batches(batch_dir, id_col='ID', play_col='Played Count'):
+    file_paths = []
+    for root, dirs, files in os.walk(batch_dir):
+        for file in files:
+            file_paths.append(os.path.join(root, file))
+
+    play_count_dict = {}
+    for path in file_paths:
+        if (path.endswith('.csv')):
+            play_count_dict.update(read_ids_and_played_counts_from_csv(path))
+            print('Data read from ' + path + '. Dictonary now has ' + str(len(play_count_dict)) + ' entries.')
+
+    return play_count_dict
+
+
 def read_ids_and_played_counts_from_csv(file_path, id_col='ID', play_col='Played Count'):
     play_count_dict = {}
     try:
@@ -27,8 +43,8 @@ def get_delta_played_counts(persistent_ids, csv_dir='/Users/charliec/Library/Clo
     delta_dict = {}
     
     try:
-        play_count_dict_old = dict(read_ids_and_played_counts_from_csv(os.path.join(csv_dir, 'AllExport_old.csv')))
-        play_count_dict_new = dict(read_ids_and_played_counts_from_csv(os.path.join(csv_dir, 'AllExport.csv')))
+        play_count_dict_old = dict(read_ids_and_played_counts_from_csv_batches(os.path.join(csv_dir, 'AllExports_old.csv')))
+        play_count_dict_new = dict(read_ids_and_played_counts_from_csv_batches(os.path.join(csv_dir, 'AllExports')))
     except Exception as e:
         print(f"Error reading CSV files: {e}")
         return {}
@@ -62,10 +78,12 @@ def save_tracks_to_csv(sorted_data: List[Tuple[str, int]], output_path: str ='/U
         writer.writerows(sorted_data)
 
 
+read_ids_and_played_counts_from_csv_batches('/Users/charliec/Library/CloudStorage/OneDrive-Personal/CharlieCares/charrrboard/AllExports')
+
 # MAIN ACTIONS
-ids = read_ids_from_csv()
-result = get_delta_played_counts(ids)
-print(result)
-sorted = sort_tracks_by_delta_play_counts(result)
-print(sorted)
-save_tracks_to_csv(sorted)
+# ids = read_ids_from_csv()
+# result = get_delta_played_counts(ids)
+# print(result)
+# sorted = sort_tracks_by_delta_play_counts(result)
+# print(sorted)
+# save_tracks_to_csv(sorted)
