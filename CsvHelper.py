@@ -43,7 +43,7 @@ def get_delta_played_counts(persistent_ids, csv_dir='/Users/charliec/Library/Clo
     delta_dict = {}
     
     try:
-        play_count_dict_old = dict(read_ids_and_played_counts_from_csv_batches(os.path.join(csv_dir, 'AllExports_old.csv')))
+        play_count_dict_old = dict(read_ids_and_played_counts_from_csv_batches(os.path.join(csv_dir, 'AllExports_old')))
         play_count_dict_new = dict(read_ids_and_played_counts_from_csv_batches(os.path.join(csv_dir, 'AllExports')))
     except Exception as e:
         print(f"Error reading CSV files: {e}")
@@ -78,12 +78,10 @@ def save_tracks_to_csv(sorted_data: List[Tuple[str, int]], output_path: str ='/U
         writer.writerows(sorted_data)
 
 
-read_ids_and_played_counts_from_csv_batches('/Users/charliec/Library/CloudStorage/OneDrive-Personal/CharlieCares/charrrboard/AllExports')
-
 # MAIN ACTIONS
-# ids = read_ids_from_csv()
-# result = get_delta_played_counts(ids)
-# print(result)
-# sorted = sort_tracks_by_delta_play_counts(result)
-# print(sorted)
-# save_tracks_to_csv(sorted)
+ids = read_ids_from_csv()
+result = get_delta_played_counts(ids)
+print(result)
+sorted = sort_tracks_by_delta_play_counts(result)
+print(sorted)
+save_tracks_to_csv(sorted)
