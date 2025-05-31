@@ -77,11 +77,11 @@ def save_tracks_to_csv(sorted_data: List[Tuple[str, int]], output_path: str ='/U
         writer = csv.writer(f)
         writer.writerows(sorted_data)
 
+    print('Weekly chart created at ' + output_path + '.')
+
 
 # MAIN ACTIONS
 ids = read_ids_from_csv()
 result = get_delta_played_counts(ids)
-print(result)
 sorted = sort_tracks_by_delta_play_counts(result)
-print(sorted)
 save_tracks_to_csv(sorted)
