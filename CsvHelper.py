@@ -5,9 +5,8 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-WORKING_FOLDER_DIR = "/Users/charliec/myDev/AppleScripts/AppleMusicWeeklyChart"
+WORKING_FOLDER_DIR = "/Users/charliec/myDev/AppleScripts/AppleMusicWeeklyChart/WorkingFolder"
 RECENTLY_PLAYED_PATH = WORKING_FOLDER_DIR + "/RecentlyPlayed.csv"
-NEW_CHART_PATH = WORKING_FOLDER_DIR + "/NewChart.csv"
 ALL_EXPORT_DIR_PREFIX = WORKING_FOLDER_DIR + "/AllExport_"
 
 
@@ -75,7 +74,7 @@ def sort_tracks_by_delta_play_counts(
     return sorted(delta_dict.items(), key=lambda x: x[1], reverse=reverse)
 
 
-def save_tracks_to_csv(sorted_data: List[Tuple[str, int]], output_path: str = NEW_CHART_PATH) -> None:
+def save_tracks_to_csv(sorted_data: List[Tuple[str, int]], output_path: str) -> None:
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     
@@ -88,9 +87,9 @@ def save_tracks_to_csv(sorted_data: List[Tuple[str, int]], output_path: str = NE
 
 # MAIN ACTIONS
 today = date.today().strftime("%Y.%m.%d")
-last_week = (date.today() - timedelta(days=7)).strftime("%Y.%m.%d")
+last_week = (date.today() - timedelta(days=3)).strftime("%Y.%m.%d")
 
 ids = read_ids_from_csv()
 result = get_delta_played_counts(ids, new_export_dir=ALL_EXPORT_DIR_PREFIX + today, old_export_dir=ALL_EXPORT_DIR_PREFIX + last_week)
 sorted = sort_tracks_by_delta_play_counts(result)
-save_tracks_to_csv(sorted)
+save_tracks_to_csv(sorted, output_path=WORKING_FOLDER_DIR + "/Chart_" + today + ".csv")
