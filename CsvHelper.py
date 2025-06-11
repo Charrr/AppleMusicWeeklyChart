@@ -40,7 +40,7 @@ def read_ids_and_played_counts_from_csv(file_path, id_col='ID', play_col='Played
 
 def read_ids_from_csv(file_path=RECENTLY_PLAYED_PATH):
     with open(file_path, 'r', encoding='mac_roman') as file:
-        tracks = [row[0] for row in csv.reader(file)][1:]  # 跳过表头
+        tracks = [row[0] for row in csv.reader(file)]
         return tracks
 
 
@@ -58,6 +58,7 @@ def get_delta_played_counts(persistent_ids, new_export_dir, old_export_dir):
         try:
             if id not in play_count_dict_old:
                 delta_dict[id] = play_count_dict_new[id]
+                print(str(id) + " is new! delta: " + str(delta_dict[id]))
             else:
                 delta_dict[id] = play_count_dict_new[id] - play_count_dict_old[id]
         except Exception as e:
@@ -85,11 +86,19 @@ def save_tracks_to_csv(sorted_data: List[Tuple[str, int]], output_path: str) -> 
     print('Weekly chart created at ' + output_path + '.')
 
 
-# MAIN ACTIONS
-today = date.today().strftime("%Y.%m.%d")
-last_week = (date.today() - timedelta(days=3)).strftime("%Y.%m.%d")
+def compare_play_count_records(new_date: str, old_date: str):
+    ids = read_ids_from_csv()
+    result = get_delta_played_counts(ids, new_export_dir=ALL_EXPORT_DIR_PREFIX + new_date, old_export_dir=ALL_EXPORT_DIR_PREFIX + old_date)
+    sorted = sort_tracks_by_delta_play_counts(result)
+    save_tracks_to_csv(sorted, output_path=WORKING_FOLDER_DIR + "/Chart_" + new_date + ".csv")
 
-ids = read_ids_from_csv()
-result = get_delta_played_counts(ids, new_export_dir=ALL_EXPORT_DIR_PREFIX + today, old_export_dir=ALL_EXPORT_DIR_PREFIX + last_week)
-sorted = sort_tracks_by_delta_play_counts(result)
-save_tracks_to_csv(sorted, output_path=WORKING_FOLDER_DIR + "/Chart_" + today + ".csv")
+
+def compare_play_count_records_by_day(delta_day):
+    today = date.today().strftime("%Y.%m.%d")
+    past = (date.today() - timedelta(days=delta_day)).strftime("%Y.%m.%d")
+    compare_play_count_records(today, past)
+
+
+# MAIN ACTIONS
+compare_play_count_records_by_day(7)
+
