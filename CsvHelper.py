@@ -44,7 +44,7 @@ def read_ids_from_csv(file_path=RECENTLY_PLAYED_PATH):
         return tracks
 
 
-def get_delta_played_counts(persistent_ids, new_export_dir, old_export_dir):
+def get_delta_played_counts(new_export_dir, old_export_dir, pids = None):
     delta_dict = {}
 
     try:
@@ -54,13 +54,18 @@ def get_delta_played_counts(persistent_ids, new_export_dir, old_export_dir):
         print(f"Error reading CSV files: {e}")
         return {}
     
-    for id in persistent_ids:
+    if pids is None:
+        pids = play_count_dict_new.keys()
+    
+    for id in pids:
         try:
             if id not in play_count_dict_old:
                 delta_dict[id] = play_count_dict_new[id]
                 print(str(id) + " is new! delta: " + str(delta_dict[id]))
             else:
-                delta_dict[id] = play_count_dict_new[id] - play_count_dict_old[id]
+                delta = play_count_dict_new[id] - play_count_dict_old[id]
+                if delta != 0:
+                    delta_dict[id] = play_count_dict_new[id] - play_count_dict_old[id]
         except Exception as e:
             print(f"Error processing ID {id}: {e}")
             continue
@@ -87,8 +92,7 @@ def save_tracks_to_csv(sorted_data: List[Tuple[str, int]], output_path: str) -> 
 
 
 def compare_play_count_records(new_date: str, old_date: str):
-    ids = read_ids_from_csv()
-    result = get_delta_played_counts(ids, new_export_dir=ALL_EXPORT_DIR_PREFIX + new_date, old_export_dir=ALL_EXPORT_DIR_PREFIX + old_date)
+    result = get_delta_played_counts(new_export_dir=ALL_EXPORT_DIR_PREFIX + new_date, old_export_dir=ALL_EXPORT_DIR_PREFIX + old_date, pids=read_ids_from_csv())
     sorted = sort_tracks_by_delta_play_counts(result)
     save_tracks_to_csv(sorted, output_path=WORKING_FOLDER_DIR + "/Chart_" + new_date + ".csv")
 
