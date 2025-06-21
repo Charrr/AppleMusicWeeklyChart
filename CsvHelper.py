@@ -38,10 +38,10 @@ def read_ids_and_played_counts_from_csv(file_path, id_col='ID', play_col='Played
     return play_count_dict
 
 
-def read_ids_from_csv(file_path=RECENTLY_PLAYED_PATH):
-    with open(file_path, 'r', encoding='mac_roman') as file:
-        tracks = [row[0] for row in csv.reader(file)]
-        return tracks
+# def read_ids_from_csv(file_path=RECENTLY_PLAYED_PATH):
+#     with open(file_path, 'r', encoding='mac_roman') as file:
+#         tracks = [row[0] for row in csv.reader(file)]
+#         return tracks
 
 
 def get_delta_played_counts(new_export_dir, old_export_dir, pids = None):
@@ -92,7 +92,7 @@ def save_tracks_to_csv(sorted_data: List[Tuple[str, int]], output_path: str) -> 
 
 
 def compare_play_count_records(new_date: str, old_date: str):
-    result = get_delta_played_counts(new_export_dir=ALL_EXPORT_DIR_PREFIX + new_date, old_export_dir=ALL_EXPORT_DIR_PREFIX + old_date, pids=read_ids_from_csv())
+    result = get_delta_played_counts(new_export_dir=ALL_EXPORT_DIR_PREFIX + new_date, old_export_dir=ALL_EXPORT_DIR_PREFIX + old_date)
     sorted = sort_tracks_by_delta_play_counts(result)
     save_tracks_to_csv(sorted, output_path=WORKING_FOLDER_DIR + "/Chart_" + new_date + ".csv")
 
