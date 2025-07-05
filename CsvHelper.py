@@ -1,7 +1,10 @@
 
 import csv
 import os
-from datetime import date, timedelta
+import re
+import sys
+from datetime import date, timedelta, datetime
+from dateutil.relativedelta import relativedelta
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -91,10 +94,12 @@ def save_tracks_to_csv(sorted_data: List[Tuple[str, int]], output_path: str) -> 
     print('Weekly chart created at ' + output_path + '.')
 
 
-def compare_play_count_records(new_date: str, old_date: str):
+def compare_play_count_records(new_date: str, old_date: str, output_path: str = None):
     result = get_delta_played_counts(new_export_dir=ALL_EXPORT_DIR_PREFIX + new_date, old_export_dir=ALL_EXPORT_DIR_PREFIX + old_date)
     sorted = sort_tracks_by_delta_play_counts(result)
-    save_tracks_to_csv(sorted, output_path=WORKING_FOLDER_DIR + "/Chart_" + new_date + ".csv")
+    if not output_path:
+        output_path = WORKING_FOLDER_DIR + "/Chart_" + new_date + "_" + old_date + ".csv"
+    save_tracks_to_csv(sorted, output_path)
 
 
 def compare_play_count_records_by_day(delta_day):
@@ -103,6 +108,40 @@ def compare_play_count_records_by_day(delta_day):
     compare_play_count_records(today, past)
 
 
-# MAIN ACTIONS
-compare_play_count_records_by_day(7)
+def parse_duration(s):
+    pattern = r'(?:(\d+)Y)?(?:(\d+)m)?(?:(\d+)d)?'
+    match = re.fullmatch(pattern, s)
+    if not match:
+        raise ValueError("Invalid duration format")
+    
+    years = int(match.group(1)) if match.group(1) else 0
+    months = int(match.group(2)) if match.group(2) else 0
+    days = int(match.group(3)) if match.group(3) else 0
+    return years, months, days
 
+
+def subtract_ymd(years=0, months=0, days=0, from_date=None):
+    if from_date is None:
+        from_date = date.today()
+    return from_date - relativedelta(years=years, months=months, days=days)
+
+
+# MAIN ACTIONS
+delta_day = 7
+delta_month = 0
+delta_year = 0
+if len(sys.argv) > 1:
+    try:
+        delta_day, delta_month, delta_day = parse_duration(sys.argv[1])
+    except ValueError:
+        print(f"Invalid argument: '{sys.argv[1]}' cannot be parsed. Using default value: {delta_year}Y{delta_month}m{delta_day}d.")
+
+new_date = date.today()
+if len(sys.argv) > 2:
+    try:
+        new_date = datetime.strptime(sys.argv[2], "%Y.%m.%d").date()
+    except ValueError:
+        print(f"Invalid argument: '{sys.argv[2]}' cannot be parsed. Using today by default.")
+
+old_date = subtract_ymd(delta_year, delta_month, delta_day, from_date=new_date)
+compare_play_count_records(old_date.strftime("%Y.%m.%d"), new_date.strftime("%Y.%m.%d"))
