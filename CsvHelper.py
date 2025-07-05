@@ -2,6 +2,7 @@
 import csv
 import os
 import re
+import subprocess
 import sys
 from datetime import date, timedelta, datetime
 from dateutil.relativedelta import relativedelta
@@ -11,7 +12,8 @@ from typing import Dict, List, Tuple
 WORKING_FOLDER_DIR = "/Users/charliec/myDev/AppleScripts/AppleMusicWeeklyChart/WorkingFolder"
 RECENTLY_PLAYED_PATH = WORKING_FOLDER_DIR + "/RecentlyPlayed.csv"
 ALL_EXPORT_DIR_PREFIX = WORKING_FOLDER_DIR + "/AllExport_"
-
+TRACK_INFO_GRABBER_AS_PATH = "/Users/charliec/myDev/AppleScripts/AppleMusicWeeklyChart/TrackInfoGrabber.scpt"
+MIN_PLAYCOUNT = 3
 
 def read_ids_and_played_counts_from_csv_batches(batch_dir):
     file_paths = []
@@ -86,12 +88,30 @@ def sort_tracks_by_delta_play_counts(
 def save_tracks_to_csv(sorted_data: List[Tuple[str, int]], output_path: str) -> None:
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    
-    with open(path, 'w', newline='', encoding='mac_roman') as f:
-        writer = csv.writer(f)
-        writer.writerows(sorted_data)
 
+    with open(path, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        for pid, playcount in sorted_data:
+            if playcount < MIN_PLAYCOUNT:
+                continue
+            track_info = get_track_info(pid)
+            print(f"{playcount}\t{track_info}")
+            writer.writerow([pid, playcount, track_info])
+            
     print('Weekly chart created at ' + output_path + '.')
+
+
+def get_track_info(pid: str):
+    result = subprocess.run(
+        ["osascript", TRACK_INFO_GRABBER_AS_PATH, pid],
+        capture_output=True,
+        text=True
+    )
+    if result.returncode == 0:
+        return result.stdout.strip()
+    else:
+        print('Error: ' + result.stderr.strip())
+        return result.stderr.strip()
 
 
 def compare_play_count_records(new_date: str, old_date: str, output_path: str = None):
@@ -120,10 +140,10 @@ def compare_play_count_records(new_date: str, old_date: str, output_path: str = 
 #     return years, months, days
 
 
-def subtract_ymd(years=0, months=0, days=0, from_date=None):
-    if from_date is None:
-        from_date = date.today()
-    return from_date - relativedelta(years=years, months=months, days=days)
+# def subtract_ymd(years=0, months=0, days=0, from_date=None):
+#     if from_date is None:
+#         from_date = date.today()
+#     return from_date - relativedelta(years=years, months=months, days=days)
 
 
 # MAIN ACTIONS
@@ -153,7 +173,7 @@ if len(sys.argv) > 1:
     except ValueError:
         print(f"Invalid argument: '{sys.argv[1]}' cannot be parsed. Using today by default.")
 
-old_date = subtract_ymd(years=0, months=1, days=0, from_date=new_date)
+old_date = new_date - relativedelta(years=0, months=0, days=7)
 if len(sys.argv) > 2:
     try:
         old_date = datetime.strptime(sys.argv[2], "%Y.%m.%d").date()
