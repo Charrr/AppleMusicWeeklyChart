@@ -102,22 +102,22 @@ def compare_play_count_records(new_date: str, old_date: str, output_path: str = 
     save_tracks_to_csv(sorted, output_path)
 
 
-def compare_play_count_records_by_day(delta_day):
-    today = date.today().strftime("%Y.%m.%d")
-    past = (date.today() - timedelta(days=delta_day)).strftime("%Y.%m.%d")
-    compare_play_count_records(today, past)
+# def compare_play_count_records_by_day(delta_day):
+#     today = date.today().strftime("%Y.%m.%d")
+#     past = (date.today() - timedelta(days=delta_day)).strftime("%Y.%m.%d")
+#     compare_play_count_records(today, past)
 
 
-def parse_duration(s):
-    pattern = r'(?:(\d+)Y)?(?:(\d+)m)?(?:(\d+)d)?'
-    match = re.fullmatch(pattern, s)
-    if not match:
-        raise ValueError("Invalid duration format")
+# def parse_duration(s):
+#     pattern = r'(?:(\d+)Y)?(?:(\d+)m)?(?:(\d+)d)?'
+#     match = re.fullmatch(pattern, s)
+#     if not match:
+#         raise ValueError("Invalid duration format")
     
-    years = int(match.group(1)) if match.group(1) else 0
-    months = int(match.group(2)) if match.group(2) else 0
-    days = int(match.group(3)) if match.group(3) else 0
-    return years, months, days
+#     years = int(match.group(1)) if match.group(1) else 0
+#     months = int(match.group(2)) if match.group(2) else 0
+#     days = int(match.group(3)) if match.group(3) else 0
+#     return years, months, days
 
 
 def subtract_ymd(years=0, months=0, days=0, from_date=None):
@@ -127,21 +127,37 @@ def subtract_ymd(years=0, months=0, days=0, from_date=None):
 
 
 # MAIN ACTIONS
-delta_day = 7
-delta_month = 0
-delta_year = 0
-if len(sys.argv) > 1:
-    try:
-        delta_day, delta_month, delta_day = parse_duration(sys.argv[1])
-    except ValueError:
-        print(f"Invalid argument: '{sys.argv[1]}' cannot be parsed. Using default value: {delta_year}Y{delta_month}m{delta_day}d.")
+# delta_day = 7
+# delta_month = 0
+# delta_year = 0
+# if len(sys.argv) > 1:
+#     try:
+#         delta_day, delta_month, delta_day = parse_duration(sys.argv[1])
+#     except ValueError:
+#         print(f"Invalid argument: '{sys.argv[1]}' cannot be parsed. Using default value: {delta_year}Y{delta_month}m{delta_day}d.")
+
+# new_date = date.today()
+# if len(sys.argv) > 2:
+#     try:
+#         new_date = datetime.strptime(sys.argv[2], "%Y.%m.%d").date()
+#     except ValueError:
+#         print(f"Invalid argument: '{sys.argv[2]}' cannot be parsed. Using today by default.")
+
+# old_date = subtract_ymd(delta_year, delta_month, delta_day, from_date=new_date)
+# compare_play_count_records(old_date.strftime("%Y.%m.%d"), new_date.strftime("%Y.%m.%d"))
 
 new_date = date.today()
+if len(sys.argv) > 1:
+    try:
+        new_date = datetime.strptime(sys.argv[1], "%Y.%m.%d").date()
+    except ValueError:
+        print(f"Invalid argument: '{sys.argv[1]}' cannot be parsed. Using today by default.")
+
+old_date = subtract_ymd(years=0, months=1, days=0, from_date=new_date)
 if len(sys.argv) > 2:
     try:
-        new_date = datetime.strptime(sys.argv[2], "%Y.%m.%d").date()
+        old_date = datetime.strptime(sys.argv[2], "%Y.%m.%d").date()
     except ValueError:
-        print(f"Invalid argument: '{sys.argv[2]}' cannot be parsed. Using today by default.")
+        print(f"Invalid argument: '{sys.argv[2]}' cannot be parsed. Using one week ago from the new date by default.")
 
-old_date = subtract_ymd(delta_year, delta_month, delta_day, from_date=new_date)
-compare_play_count_records(old_date.strftime("%Y.%m.%d"), new_date.strftime("%Y.%m.%d"))
+compare_play_count_records(new_date.strftime("%Y.%m.%d"), old_date.strftime("%Y.%m.%d"))
