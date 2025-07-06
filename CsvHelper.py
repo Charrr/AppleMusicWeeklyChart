@@ -1,10 +1,9 @@
 
 import csv
 import os
-import re
 import subprocess
 import sys
-from datetime import date, timedelta, datetime
+from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -42,12 +41,6 @@ def read_ids_and_played_counts_from_csv(file_path, id_col='ID', play_col='Played
         print(f"Error when reading file: {e}")
         return {}
     return play_count_dict
-
-
-# def read_ids_from_csv(file_path=RECENTLY_PLAYED_PATH):
-#     with open(file_path, 'r', encoding='mac_roman') as file:
-#         tracks = [row[0] for row in csv.reader(file)]
-#         return tracks
 
 
 def get_delta_played_counts(new_export_dir, old_export_dir, pids = None):
@@ -145,51 +138,12 @@ def create_playlist_from_pids(pids: list[str], playlist_name: str):
     else:
         print("Error:", result.stderr.strip())
 
-# def compare_play_count_records_by_day(delta_day):
-#     today = date.today().strftime("%Y.%m.%d")
-#     past = (date.today() - timedelta(days=delta_day)).strftime("%Y.%m.%d")
-#     compare_play_count_records(today, past)
 
 
-# def parse_duration(s):
-#     pattern = r'(?:(\d+)Y)?(?:(\d+)m)?(?:(\d+)d)?'
-#     match = re.fullmatch(pattern, s)
-#     if not match:
-#         raise ValueError("Invalid duration format")
-    
-#     years = int(match.group(1)) if match.group(1) else 0
-#     months = int(match.group(2)) if match.group(2) else 0
-#     days = int(match.group(3)) if match.group(3) else 0
-#     return years, months, days
-
-
-# def subtract_ymd(years=0, months=0, days=0, from_date=None):
-#     if from_date is None:
-#         from_date = date.today()
-#     return from_date - relativedelta(years=years, months=months, days=days)
-
-
-# MAIN ACTIONS
+##### MAIN ACTIONS #####
 delta_day = 7
 delta_month = 0
 delta_year = 0
-# if len(sys.argv) > 1:
-#     try:
-#         delta_day, delta_month, delta_day = parse_duration(sys.argv[1])
-#     except ValueError:
-#         print(f"Invalid argument: '{sys.argv[1]}' cannot be parsed. Using default value: {delta_year}Y{delta_month}m{delta_day}d.")
-
-# new_date = date.today()
-# if len(sys.argv) > 2:
-#     try:
-#         new_date = datetime.strptime(sys.argv[2], "%Y.%m.%d").date()
-#     except ValueError:
-#         print(f"Invalid argument: '{sys.argv[2]}' cannot be parsed. Using today by default.")
-
-# old_date = subtract_ymd(delta_year, delta_month, delta_day, from_date=new_date)
-# compare_play_count_records(old_date.strftime("%Y.%m.%d"), new_date.strftime("%Y.%m.%d"))
-
-##### MAIN ACTIONS #####
 new_date = date.today()
 if len(sys.argv) > 1:
     try:
@@ -211,6 +165,5 @@ chart_type = (
     "年榜" if delta_year == 1 else
     ""
 )
-
 pids = read_pids_from_csv(csv_path)
 create_playlist_from_pids(pids, f"Charrrboard {chart_type} {new_date.strftime('%Y.%m.%d')}")
