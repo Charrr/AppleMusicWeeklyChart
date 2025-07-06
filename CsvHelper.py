@@ -8,13 +8,16 @@ from dateutil.relativedelta import relativedelta
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+
+### Macro Constants ###
 WORKING_FOLDER_DIR = "/Users/charliec/myDev/AppleScripts/AppleMusicWeeklyChart/WorkingFolder"
-RECENTLY_PLAYED_PATH = WORKING_FOLDER_DIR + "/RecentlyPlayed.csv"
 ALL_EXPORT_DIR_PREFIX = WORKING_FOLDER_DIR + "/AllExport_"
 TRACK_INFO_GRABBER_SCPT_PATH = "/Users/charliec/myDev/AppleScripts/AppleMusicWeeklyChart/TrackInfoGrabber.scpt"
 PLAYLIST_CREATOR_SCPT_PATH = "/Users/charliec/myDev/AppleScripts/AppleMusicWeeklyChart/PlaylistCreator.scpt"
 MIN_PLAYCOUNT = 3
 
+
+### Csv Operations ###
 def read_ids_and_played_counts_from_csv_batches(batch_dir):
     file_paths = []
     for root, dirs, files in os.walk(batch_dir):
@@ -79,7 +82,7 @@ def sort_tracks_by_delta_play_counts(
     return sorted(delta_dict.items(), key=lambda x: x[1], reverse=reverse)
 
 
-def save_tracks_to_csv(sorted_data: List[Tuple[str, int]], output_path: str) -> None:
+def save_chart_to_csv(sorted_data: List[Tuple[str, int]], output_path: str) -> None:
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -92,7 +95,7 @@ def save_tracks_to_csv(sorted_data: List[Tuple[str, int]], output_path: str) -> 
             print(f"{playcount}\t{track_info}")
             writer.writerow([pid, playcount, track_info])
             
-    print('Weekly chart created at ' + output_path + '.')
+    print('New chart created at ' + output_path + '.')
 
 
 def read_pids_from_csv(csv_path: str) -> list[str]:
@@ -102,6 +105,17 @@ def read_pids_from_csv(csv_path: str) -> list[str]:
     return pids
 
 
+def compare_play_count_records(new_date: str, old_date: str, output_path: str = None):
+    print(f"Comparing playcount data from {old_date} to {new_date}...")
+    result = get_delta_played_counts(new_export_dir=ALL_EXPORT_DIR_PREFIX + new_date, old_export_dir=ALL_EXPORT_DIR_PREFIX + old_date)
+    sorted = sort_tracks_by_delta_play_counts(result)
+    if not output_path:
+        output_path = WORKING_FOLDER_DIR + "/Chart_" + new_date + "_" + old_date + ".csv"
+    save_chart_to_csv(sorted, output_path)
+    return output_path
+    
+   
+### Apple Script Operations ###
 def get_track_info(pid: str):
     result = subprocess.run(
         ["osascript", TRACK_INFO_GRABBER_SCPT_PATH, pid],
@@ -113,16 +127,6 @@ def get_track_info(pid: str):
     else:
         print('Error: ' + result.stderr.strip())
         return result.stderr.strip()
-
-
-def compare_play_count_records(new_date: str, old_date: str, output_path: str = None):
-    print(f"Comparing playcount data from {old_date} to {new_date}...")
-    result = get_delta_played_counts(new_export_dir=ALL_EXPORT_DIR_PREFIX + new_date, old_export_dir=ALL_EXPORT_DIR_PREFIX + old_date)
-    sorted = sort_tracks_by_delta_play_counts(result)
-    if not output_path:
-        output_path = WORKING_FOLDER_DIR + "/Chart_" + new_date + "_" + old_date + ".csv"
-    save_tracks_to_csv(sorted, output_path)
-    return output_path
     
     
 def create_playlist_from_pids(pids: list[str], playlist_name: str):
@@ -139,8 +143,9 @@ def create_playlist_from_pids(pids: list[str], playlist_name: str):
         print("Error:", result.stderr.strip())
 
 
-
+########################
 ##### MAIN ACTIONS #####
+########################
 delta_day = 7
 delta_month = 0
 delta_year = 0
@@ -160,10 +165,10 @@ if len(sys.argv) > 2:
 
 csv_path = compare_play_count_records(new_date.strftime("%Y.%m.%d"), old_date.strftime("%Y.%m.%d"))
 chart_type = (
-    "周榜" if delta_day == 7 else
-    "月榜" if delta_month == 1 else
-    "年榜" if delta_year == 1 else
+    "📅 周榜" if delta_day == 7 else
+    "🌙 月榜" if delta_month == 1 else
+    "🎊 年榜" if delta_year == 1 else
     ""
 )
 pids = read_pids_from_csv(csv_path)
-create_playlist_from_pids(pids, f"Charrrboard {chart_type} {new_date.strftime('%Y.%m.%d')}")
+create_playlist_from_pids(pids, f"{chart_type} {new_date.strftime('%Y.%m.%d')}")
