@@ -92,8 +92,13 @@ def save_chart_to_csv(sorted_data: List[Tuple[str, int]], output_path: str) -> N
             if playcount < MIN_PLAYCOUNT:
                 continue
             track_info = get_track_info(pid)
-            print(f"{playcount}\t{track_info}")
-            writer.writerow([pid, playcount, track_info])
+            track_info_parts = track_info.split(" ::: ")
+            artist = track_info_parts[0] if len(track_info_parts) > 0 else ""
+            title = track_info_parts[1] if len(track_info_parts) > 1 else ""
+            duration = track_info_parts[2] if len(track_info_parts) > 2 else ""
+            duration_int = duration.split(",")[0] if duration else ""
+            print(f"{playcount}\t{artist} - {title}\t({duration_int}s)")
+            writer.writerow([pid, playcount, f"{artist} - {title}", duration_int])
             
     print('New chart created at ' + output_path + '.')
 
@@ -105,7 +110,7 @@ def read_pids_from_csv(csv_path: str) -> list[str]:
     return pids
 
 
-def compare_play_count_records(new_date: str, old_date: str, output_path: str = None):
+def compare_play_count_records_by_dates(new_date: str, old_date: str, output_path: str = None):
     print(f"Comparing playcount data from {old_date} to {new_date}...")
     result = get_delta_played_counts(new_export_dir=ALL_EXPORT_DIR_PREFIX + new_date, old_export_dir=ALL_EXPORT_DIR_PREFIX + old_date)
     sorted = sort_tracks_by_delta_play_counts(result)
@@ -115,9 +120,9 @@ def compare_play_count_records(new_date: str, old_date: str, output_path: str = 
     return output_path
 
 
-def compare_play_count_records(new_date: str, delta_days: int = 7, delta_months: int = 0, output_path: str = None):
+def compare_play_count_records_by_increment(new_date: str, delta_days: int = 7, delta_months: int = 0, output_path: str = None):
     old_date = (datetime.strptime(new_date, "%Y.%m.%d") - relativedelta(months=delta_months, days=delta_days)).date()
-    compare_play_count_records(new_date, old_date, output_path)
+    compare_play_count_records_by_dates(new_date, old_date.strftime("%Y.%m.%d"), output_path)
     
    
 ### Apple Script Operations ###
@@ -168,7 +173,7 @@ if len(sys.argv) > 2:
     except ValueError:
         print(f"Invalid argument: '{sys.argv[2]}' cannot be parsed. Using one week ago from the new date by default.")
 
-csv_path = compare_play_count_records(new_date.strftime("%Y.%m.%d"), delta_days=delta_day, delta_months=delta_month)
+csv_path = compare_play_count_records_by_increment(new_date.strftime("%Y.%m.%d"), delta_days=delta_day, delta_months=delta_month)
 
 chart_type = (
     "📅 周榜" if delta_day == 7 else
@@ -177,5 +182,5 @@ chart_type = (
     ""
 )
 
-pids = read_pids_from_csv(csv_path)
-create_playlist_from_pids(pids, f"{chart_type} {new_date.strftime('%Y.%m.%d')}")
+# pids = read_pids_from_csv(csv_path)
+# create_playlist_from_pids(pids, f"{chart_type} {new_date.strftime('%Y.%m.%d')}")
