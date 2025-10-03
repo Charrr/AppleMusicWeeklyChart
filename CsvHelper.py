@@ -115,8 +115,8 @@ def compare_play_count_records(new_date: str, old_date: str, output_path: str = 
     return output_path
 
 
-def compare_play_count_records_by_days(new_date: str, delta_days: int = 7, output_path: str = None):
-    old_date = (datetime.strptime(new_date, "%Y.%m.%d") - relativedelta(days=delta_days)).strftime("%Y.%m.%d")
+def compare_play_count_records(new_date: str, delta_days: int = 7, delta_months: int = 0, output_path: str = None):
+    old_date = (datetime.strptime(new_date, "%Y.%m.%d") - relativedelta(months=delta_months, days=delta_days)).date()
     compare_play_count_records(new_date, old_date, output_path)
     
    
@@ -153,27 +153,29 @@ def create_playlist_from_pids(pids: list[str], playlist_name: str):
 ########################
 delta_day = 7
 delta_month = 0
-delta_year = 0
+
 new_date = date.today()
+
 if len(sys.argv) > 1:
     try:
         new_date = datetime.strptime(sys.argv[1], "%Y.%m.%d").date()
     except ValueError:
         print(f"Invalid argument: '{sys.argv[1]}' cannot be parsed. Using today by default.")
 
-old_date = new_date - relativedelta(years=delta_year, months=delta_month, days=delta_day)
 if len(sys.argv) > 2:
     try:
         old_date = datetime.strptime(sys.argv[2], "%Y.%m.%d").date()
     except ValueError:
         print(f"Invalid argument: '{sys.argv[2]}' cannot be parsed. Using one week ago from the new date by default.")
 
-csv_path = compare_play_count_records(new_date.strftime("%Y.%m.%d"), old_date.strftime("%Y.%m.%d"))
+csv_path = compare_play_count_records(new_date.strftime("%Y.%m.%d"), delta_days=delta_day, delta_months=delta_month)
+
 chart_type = (
     "📅 周榜" if delta_day == 7 else
     "🌙 月榜" if delta_month == 1 else
-    "🎊 年榜" if delta_year == 1 else
+    "🎊 年榜" if delta_month == 12 else
     ""
 )
+
 pids = read_pids_from_csv(csv_path)
 create_playlist_from_pids(pids, f"{chart_type} {new_date.strftime('%Y.%m.%d')}")
