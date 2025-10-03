@@ -11,7 +11,7 @@ from typing import Dict, List, Tuple
 
 ### Macro Constants ###
 WORKING_FOLDER_DIR = "/Users/charliec/myDev/AppleScripts/AppleMusicWeeklyChart/WorkingFolder"
-ALL_EXPORT_DIR_PREFIX = WORKING_FOLDER_DIR + "/AllExport_"
+ALL_EXPORT_DIR_PREFIX = WORKING_FOLDER_DIR + "/AllExports/AllExport_"
 TRACK_INFO_GRABBER_SCPT_PATH = "/Users/charliec/myDev/AppleScripts/AppleMusicWeeklyChart/TrackInfoGrabber.scpt"
 PLAYLIST_CREATOR_SCPT_PATH = "/Users/charliec/myDev/AppleScripts/AppleMusicWeeklyChart/PlaylistCreator.scpt"
 MIN_PLAYCOUNT = 3
@@ -198,9 +198,7 @@ def create_playlist_from_pids(pids: list[str], playlist_name: str):
 ########################
 delta_day = 7
 delta_month = 0
-
 new_date = date.today()
-new_date = datetime.strptime("2025.10.03", "%Y.%m.%d")
 
 if len(sys.argv) > 1:
     try:
@@ -208,13 +206,15 @@ if len(sys.argv) > 1:
     except ValueError:
         print(f"Invalid argument: '{sys.argv[1]}' cannot be parsed. Using today by default.")
 
-if len(sys.argv) > 2:
-    try:
-        old_date = datetime.strptime(sys.argv[2], "%Y.%m.%d").date()
-    except ValueError:
-        print(f"Invalid argument: '{sys.argv[2]}' cannot be parsed. Using one week ago from the new date by default.")
+# new_date = datetime.strptime("2025.10.03", "%Y.%m.%d")
+# csv_path = compare_play_count_records_by_increment(new_date.strftime("%Y.%m.%d"), delta_days=delta_day, delta_months=delta_month)
 
-csv_path = compare_play_count_records_by_increment(new_date.strftime("%Y.%m.%d"), delta_days=delta_day, delta_months=delta_month)
+start_date = datetime.strptime("2025.10.03", "%Y.%m.%d").date()
+end_date = datetime.strptime("2025.07.18", "%Y.%m.%d").date()
+current_date = start_date
+while current_date >= end_date:
+    compare_play_count_records_by_increment(current_date.strftime("%Y.%m.%d"), delta_days=delta_day, delta_months=delta_month)
+    current_date -= relativedelta(days=7)
 
 chart_type = (
     "📅 周榜" if delta_day == 7 else
