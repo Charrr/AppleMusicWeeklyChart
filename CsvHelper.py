@@ -113,6 +113,11 @@ def compare_play_count_records(new_date: str, old_date: str, output_path: str = 
         output_path = WORKING_FOLDER_DIR + "/Chart_" + new_date + "_" + old_date + ".csv"
     save_chart_to_csv(sorted, output_path)
     return output_path
+
+
+def compare_play_count_records_by_days(new_date: str, delta_days: int = 7, output_path: str = None):
+    old_date = (datetime.strptime(new_date, "%Y.%m.%d") - relativedelta(days=delta_days)).strftime("%Y.%m.%d")
+    compare_play_count_records(new_date, old_date, output_path)
     
    
 ### Apple Script Operations ###
