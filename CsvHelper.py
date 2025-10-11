@@ -154,7 +154,7 @@ def save_artist_chart_to_csv(sorted_data: List[Tuple[str, int]], output_path: st
     with open(path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         for artist, total_duration in sorted_artist_duration:
-            writer.writerow([artist, total_duration])
+            writer.writerow([artist, f"{total_duration:.2f}"])
             
     print('New artist chart created at ' + output_path + '.')
     print()
