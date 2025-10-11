@@ -82,27 +82,44 @@ def sort_tracks_by_delta_play_counts(
     return sorted(delta_dict.items(), key=lambda x: x[1], reverse=reverse)
 
 
-def save_chart_to_csv(sorted_data: List[Tuple[str, int]], output_path: str) -> None:
+def save_song_chart_to_csv(sorted_data: List[Tuple[str, int]], output_path: str) -> None:
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
 
+    track_id_by_played_minutes = {}
+    track_info_by_id = {}
+    playcount_by_id = {}
+    
+    for pid, playcount in sorted_data:
+        if playcount < MIN_PLAYCOUNT:
+            continue
+        
+        track_info = get_track_info(pid)
+        track_info_parts = track_info.split(" ::: ")
+        artist = track_info_parts[0] if len(track_info_parts) > 0 else "<unknown_artist>"
+        title = track_info_parts[1] if len(track_info_parts) > 1 else "<untitled>"
+        duration = track_info_parts[2] if len(track_info_parts) > 2 else "0"
+        duration_int = duration.split(",")[0] if duration else ""
+        total_duration = int(duration_int) * playcount if duration_int.isdigit() else 0
+        total_duration = round(total_duration / 60, 2)  # convert to minutes
+        
+        track_id_by_played_minutes[pid] = total_duration
+        track_info_by_id[pid] = f"{artist} - {title}"
+        playcount_by_id[pid] = playcount
+        print(f"{playcount}\t{total_duration} min\t{artist} - {title}")
+        
+    # Sort track_id_by_played_minutes by total played minutes in descending order
+    sorted_track_id_by_played_minutes = sorted(track_id_by_played_minutes.items(), key=lambda x: x[1], reverse=True)
     with open(path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
-        for pid, playcount in sorted_data:
-            if playcount < MIN_PLAYCOUNT:
-                continue
-            track_info = get_track_info(pid)
-            track_info_parts = track_info.split(" ::: ")
-            artist = track_info_parts[0] if len(track_info_parts) > 0 else ""
-            title = track_info_parts[1] if len(track_info_parts) > 1 else ""
-            duration = track_info_parts[2] if len(track_info_parts) > 2 else ""
-            duration_int = duration.split(",")[0] if duration else ""
-            total_duration = int(duration_int) * playcount if duration_int.isdigit() else 0
-            total_duration = round(total_duration / 60, 2)  # convert to minutes
-            print(f"{playcount}\t{total_duration} min\t{artist} - {title}")
-            writer.writerow([pid, playcount, f"{artist} - {title}", total_duration])
+        writer.writerow(['Track ID', 'Play Count', 'Total Played Minutes', 'Artist - Title'])
+        for pid, total_duration in sorted_track_id_by_played_minutes:
+            artist_title = track_info_by_id.get(pid, "")
+            playcount = playcount_by_id.get(pid, 0)
+            writer.writerow([pid, playcount, total_duration, artist_title])
             
     print('New song chart created at ' + output_path + '.')
+    print()
 
 
 def save_artist_chart_to_csv(sorted_data: List[Tuple[str, int]], output_path: str) -> None:
@@ -111,12 +128,12 @@ def save_artist_chart_to_csv(sorted_data: List[Tuple[str, int]], output_path: st
     
     artist_duration_dict: Dict[str, int] = {}
     for pid, playcount in sorted_data:
-        if playcount < MIN_PLAYCOUNT:
+        if playcount < 1:
             continue
         track_info = get_track_info(pid)
         track_info_parts = track_info.split(" ::: ")
-        artist = track_info_parts[0] if len(track_info_parts) > 0 else ""
-        duration = track_info_parts[2] if len(track_info_parts) > 2 else ""
+        artist = track_info_parts[0] if len(track_info_parts) > 0 else "<unknown_artist>"
+        duration = track_info_parts[2] if len(track_info_parts) > 2 else "0"
         duration_int = duration.split(",")[0] if duration else ""
         total_duration = int(duration_int) * playcount if duration_int.isdigit() else 0
         total_duration = round(total_duration / 60, 2)  # convert to minutes
@@ -140,6 +157,7 @@ def save_artist_chart_to_csv(sorted_data: List[Tuple[str, int]], output_path: st
             writer.writerow([artist, total_duration])
             
     print('New artist chart created at ' + output_path + '.')
+    print()
 
     
 def read_pids_from_csv(csv_path: str) -> list[str]:
@@ -149,20 +167,21 @@ def read_pids_from_csv(csv_path: str) -> list[str]:
     return pids
 
 
-def compare_play_count_records_by_dates(new_date: str, old_date: str, output_path: str = None):
+def compare_play_count_records_by_dates(new_date: str, old_date: str, output_path_song: str = None):
     print(f"Comparing playcount data from {old_date} to {new_date}...")
     result = get_delta_played_counts(new_export_dir=ALL_EXPORT_DIR_PREFIX + new_date, old_export_dir=ALL_EXPORT_DIR_PREFIX + old_date)
     sorted = sort_tracks_by_delta_play_counts(result)
-    if not output_path:
-        output_path = WORKING_FOLDER_DIR + "/SongChart_" + new_date + "_" + old_date + ".csv"
+    if not output_path_song:
+        output_path_song = WORKING_FOLDER_DIR + "/SongChart_" + new_date + "_" + old_date + ".csv"
         output_path_artist = WORKING_FOLDER_DIR + "/ArtistChart_" + new_date + "_" + old_date + ".csv"
-    save_chart_to_csv(sorted, output_path)
+    save_song_chart_to_csv(sorted, output_path_song)
     save_artist_chart_to_csv(sorted, output_path_artist)
+    return output_path_song
 
 
 def compare_play_count_records_by_increment(new_date: str, delta_days: int = 7, delta_months: int = 0, output_path: str = None):
     old_date = (datetime.strptime(new_date, "%Y.%m.%d") - relativedelta(months=delta_months, days=delta_days)).date()
-    compare_play_count_records_by_dates(new_date, old_date.strftime("%Y.%m.%d"), output_path)
+    return compare_play_count_records_by_dates(new_date, old_date.strftime("%Y.%m.%d"), output_path)
     
    
 ### Apple Script Operations ###
