@@ -133,19 +133,23 @@ def save_artist_chart_to_csv(sorted_data: List[Tuple[str, int]], output_path: st
         track_info = get_track_info(pid)
         track_info_parts = track_info.split(" ::: ")
         artist = track_info_parts[0] if len(track_info_parts) > 0 else "<unknown_artist>"
+        if not artist or artist == "<unknown_artist>":
+            continue
+        
         duration = track_info_parts[2] if len(track_info_parts) > 2 else "0"
         duration_int = duration.split(",")[0] if duration else ""
         total_duration = int(duration_int) * playcount if duration_int.isdigit() else 0
         total_duration = round(total_duration / 60, 2)  # convert to minutes
         
-        if artist:
-            if artist in artist_duration_dict:
-                print(f"+{total_duration} min\t{artist}")
-                artist_duration_dict[artist] += total_duration
-            else:
-                print(f"{total_duration} min\t{artist}")
-                artist_duration_dict[artist] = total_duration
-    print()
+        # Add duration for main artist
+        artist_duration_dict[artist] = artist_duration_dict.get(artist, 0) + total_duration
+        print(f"{'+' if artist in artist_duration_dict else ''}{total_duration} min\t{artist}")
+
+        # If multiple artists separated by " & ", add duration for each
+        if " & " in artist:
+            for a in artist.split(" & "):
+                artist_duration_dict[a] = artist_duration_dict.get(a, 0) + total_duration
+                print(f"{'+' if a in artist_duration_dict else ''}{total_duration} min\t{a}")
     
     sorted_artist_duration = sorted(artist_duration_dict.items(), key=lambda x: x[1], reverse=True)
     print("### Sorted artist durations ###")
